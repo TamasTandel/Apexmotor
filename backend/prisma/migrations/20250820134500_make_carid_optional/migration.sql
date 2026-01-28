@@ -1,0 +1,1 @@
+ALTER TABLE "ServiceBooking" ALTER COLUMN "carId" DROP NOT NULL;

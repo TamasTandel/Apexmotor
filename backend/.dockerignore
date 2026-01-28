@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+prisma/migrations/*/*_migration_dev.db
+.DS_Store

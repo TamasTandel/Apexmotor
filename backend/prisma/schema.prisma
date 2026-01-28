@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Car {
+  id                 String     @id @default(auto()) @map("_id") @db.ObjectId
+  make               String
+  model              String
+  year               Int
+  price              Float
+  image              String
+  features           String[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  userId             String?    @db.ObjectId
+  bodyType           String?
+  exShowroomPriceINR Int?
+  region             String     @default("US")
+  specs              Json?
+  category           String?
+  lastServiceDate    DateTime?
+  odometerKm         Int?
+  saleStatus         String     @default("for_sale")
+  user               User?      @relation(fields: [userId], references: [id])
+  favorites          Favorite[]
+  purchaseRequests   PurchaseRequest[]
+  testDrives         TestDriveBooking[]
+}
+
+model User {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  email         String     @unique
+  password      String
+  name          String
+  phone         String?    // contact phone
+  createdAt     DateTime   @default(now())
+  lastSeenAt    DateTime?  // updated when user hits authenticated endpoints
+  resetToken    String?
+  resetTokenExp DateTime?
+  role          String     @default("user")
+  locked        Boolean    @default(false)
+  cars          Car[]
+  favorites     Favorite[]
+  serviceBookings ServiceBooking[]
+  savedSearches SavedSearch[]
+  testDrives    TestDriveBooking[]
+  purchaseRequests PurchaseRequest[]
+}
+
+model AuditLog {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  actorId    String?  @db.ObjectId
+  action     String
+  targetType String
+  targetId   String?  @db.ObjectId
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([action, createdAt])
+}
+
+model FinanceApplication {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  amount    Float
+  status    String
+  createdAt DateTime @default(now())
+}
+
+model ServiceBooking {
+  id              String                  @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String                  @db.ObjectId
+  user            User                    @relation(fields: [userId], references: [id])
+  carId           String?                 @db.ObjectId
+  service         String
+  date            DateTime
+  status          String
+  amountPaid      Float?
+  contactPhone    String?
+  createdAt       DateTime                @default(now())
+  durationMinutes Int?
+  estimatedCost   Float?
+  internalNotes   String?
+  locationId      String?                 @db.ObjectId
+  notes           String?
+  paymentIntentId String?
+  paymentStatus   String?
+  preferredTime   String?
+  serviceType     String?
+  slotEnd         DateTime?
+  slotStart       DateTime?
+  technicianName  String?
+  updatedAt       DateTime                @updatedAt
+  address         String?
+  bookingCode     String?                 @unique
+  finalCost       Float?
+  invoiceNumber   String?
+  dropOffAt       DateTime?               @db.Timestamp
+  pickUpAt        DateTime?               @db.Timestamp
+  completedAt     DateTime?               @db.Timestamp
+  billNotes       String?
+  cancelReason    String?
+  customCar       String?
+  location        Location?               @relation(fields: [locationId], references: [id])
+  history         ServiceBookingHistory[]
+}
+
+model ServiceBookingHistory {
+  id         String         @id @default(auto()) @map("_id") @db.ObjectId
+  bookingId  String         @db.ObjectId
+  fromStatus String?
+  toStatus   String
+  actorId    String?        @db.ObjectId
+  note       String?
+  changedAt  DateTime?      @default(now()) @db.Timestamp
+  booking    ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([bookingId, changedAt])
+}
+
+model Location {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  address         String?
+  capacityPerSlot Int              @default(3)
+  createdAt       DateTime         @default(now())
+  bookings        ServiceBooking[]
+  testDrives      TestDriveBooking[]
+}
+
+model Notification {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String    @db.ObjectId
+  bookingId    String?   @db.ObjectId
+  type         String
+  status       String    @default("pending")
+  payload      Json?
+  createdAt    DateTime  @default(now())
+  sentAt       DateTime?
+  attemptCount Int       @default(0)
+  error        String?
+
+  @@index([status, createdAt])
+}
+
+model Favorite {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  carId     String   @db.ObjectId
+  createdAt DateTime @default(now())
+  car       Car      @relation(fields: [carId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, carId])
+}
+
+// User intent to purchase a car (lead). Captures snapshot of car + user contact info at time of request.
+model PurchaseRequest {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  carId       String   @db.ObjectId
+  userId      String?  @db.ObjectId
+  name        String
+  email       String
+  phone       String
+  location    String?
+  message     String?
+  status      String   @default("pending") // pending -> contacted -> closed
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  carSnapshot Json?
+
+  car   Car   @relation(fields: [carId], references: [id])
+  user  User? @relation(fields: [userId], references: [id])
+
+  @@index([status, createdAt])
+}
+
+// Saved search criteria for users; criteria stores filters used in /api/cars
+model SavedSearch {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  name           String
+  criteria       Json
+  createdAt      DateTime @default(now())
+  lastNotifiedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+// General contact leads (home page Contact Us)
+model ContactLead {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String
+  phone     String?
+  message   String?
+  createdAt DateTime @default(now())
+  status    String   @default("new") // new -> contacted -> closed
+
+  @@index([status, createdAt])
+}
+
+// Test drive booking requests
+model TestDriveBooking {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String?  @db.ObjectId
+  carId        String   @db.ObjectId
+  locationId   String?  @db.ObjectId
+  preferredDay DateTime
+  preferredTime String?
+  status       String   @default("requested") // requested -> confirmed -> completed -> cancelled
+  createdAt    DateTime @default(now())
+  notes        String?
+
+  user     User?     @relation(fields: [userId], references: [id])
+  car      Car       @relation(fields: [carId], references: [id])
+  location Location? @relation(fields: [locationId], references: [id])
+
+  @@index([carId, createdAt])
+}

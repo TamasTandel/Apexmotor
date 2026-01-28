@@ -1,0 +1,1 @@
+ALTER TABLE "ServiceBooking" ADD COLUMN IF NOT EXISTS "customCar" TEXT;
