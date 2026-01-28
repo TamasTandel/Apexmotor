@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeUp 0.5s ease-out forwards;
+}
+
+/* Hold rendering behind intro video on first visit */
+html.intro-hold body>*:not(.intro-allow) {
+  visibility: hidden !important;
+}
+
+html.intro-hold body {
+  overflow: hidden;
+}
+
+body {
+  @apply bg-gray-900 text-gray-100 antialiased;
+}
+
+/* Sidebar panel base */
+html[data-route="cars"] [data-inventory-filters] {
+  transition: transform .22s ease, opacity .22s ease, background-color .2s ease, border-color .2s ease;
+  padding: 0.75rem;
+  background: rgba(2, 6, 23, .7);
+  border: 1px solid rgba(148, 163, 184, .12);
+  border-radius: .75rem;
+}
+
+/* Desktop: Toggle visibility based on attribute */
+@media (min-width: 1024px) {
+  html[data-route="cars"] [data-inventory-filters] {
+    width: clamp(220px, 22vw, 300px);
+  }
+
+  html[data-route="cars"]:not([data-filters-open="true"]) [data-inventory-filters] {
+    display: none !important;
+    opacity: 0;
+    transform: translateX(8px);
+    pointer-events: none;
+  }
+
+  html[data-route="cars"][data-filters-open="true"] [data-inventory-filters] {
+    display: block;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  /* Grid layout adjustments when filters are open/closed */
+  html[data-route="cars"][data-filters-open="true"] .grid:has(> [data-inventory-filters]) {
+    grid-template-columns: 1fr clamp(220px, 22vw, 300px) !important;
+    column-gap: .875rem;
+    padding-left: clamp(12px, 2.5vw, 24px) !important;
+    padding-right: clamp(12px, 2.5vw, 24px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  html[data-route="cars"]:not([data-filters-open="true"]) .grid:has(> [data-inventory-filters]) {
+    grid-template-columns: 1fr !important;
+    column-gap: 0 !important;
+    padding-left: clamp(12px, 2.5vw, 24px) !important;
+    padding-right: clamp(12px, 2.5vw, 24px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}
+
+/* Mobile: Fixed overlay */
+@media (max-width: 1023.98px) {
+  html[data-route="cars"] {
+    --nav-h: 64px;
+    --tools-h: 0px;
+  }
+
+  html[data-route="cars"][data-filters-open="true"] {
+    overflow: hidden;
+  }
+
+  html[data-route="cars"] [data-inventory-filters] {
+    position: fixed;
+    right: 0;
+    top: calc(var(--nav-h) + var(--tools-h));
+    height: calc(100dvh - (var(--nav-h) + var(--tools-h)));
+    width: min(92vw, 360px);
+    max-width: 92vw;
+    background: rgba(2, 6, 23, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-left: 1px solid rgba(148, 163, 184, .2);
+    box-shadow: -12px 0 24px rgba(0, 0, 0, .45);
+    z-index: 70;
+    transform: translateX(100%);
+    opacity: 0;
+    overflow-y: auto;
+  }
+
+  html[data-route="cars"][data-filters-open="true"] [data-inventory-filters] {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Styling for form elements inside the sidebar */
+html[data-route="cars"] [data-inventory-filters] h3,
+html[data-route="cars"] [data-inventory-filters] h4 {
+  font-size: .9rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin: .25rem 0 .35rem;
+}
+
+html[data-route="cars"] [data-inventory-filters] label {
+  display: block;
+  margin: 0 0 .25rem;
+  font-size: .85rem;
+  color: #cbd5e1;
+}
+
+html[data-route="cars"] [data-inventory-filters] input,
+html[data-route="cars"] [data-inventory-filters] select {
+  width: 100%;
+  height: 2.375rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, .25);
+  background: rgba(2, 6, 23, .5);
+  color: #e5e7eb;
+  outline: none;
+}
+
+html[data-route="cars"] [data-inventory-filters] input::placeholder {
+  color: #94a3b8;
+}
+
+html[data-route="cars"] [data-inventory-filters] button {
+  border-radius: 0.5rem;
+  height: 2.375rem;
+}
+
+html[data-route="cars"] [data-inventory-filters]>*+* {
+  margin-top: .6rem;
+}
